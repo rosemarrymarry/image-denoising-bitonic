@@ -158,13 +158,16 @@ class DenoisingTrainer:
         
         denoised_blocks = []
         
+        # 清空梯度
+        self.optimizer.zero_grad()
+        batch_loss = 0.0
+        
         for noisy_block, clean_block in zip(noisy_blocks, clean_blocks):
             # 转换为张量
             noisy_tensor = self._image_to_tensor(noisy_block)
             clean_tensor = self._image_to_tensor(clean_block)
             
             # 前向传播
-            self.optimizer.zero_grad()
             features, params = self.model(noisy_tensor)
             
             # 应用双调滤波
@@ -181,12 +184,16 @@ class DenoisingTrainer:
             
             # 总损失
             loss = reconstruction_loss + 0.1 * param_loss
+            batch_loss += loss
             
-            loss.backward()
-            self.optimizer.step()
-            
-            total_loss += loss.item()
             denoised_blocks.append(filtered_block)
+        
+        # 统一反向传播
+        batch_loss = batch_loss / num_blocks
+        batch_loss.backward()
+        self.optimizer.step()
+        
+        total_loss = batch_loss.item()
         
         # 合并块
         denoised_image = self.preprocessor.merge_blocks(denoised_blocks, positions, 
@@ -197,7 +204,7 @@ class DenoisingTrainer:
         ssim = self._calculate_ssim(denoised_image, clean_image)
         
         return {
-            'loss': total_loss / num_blocks,
+            'loss': total_loss,
             'psnr': psnr,
             'ssim': ssim,
             'denoised_image': denoised_image
@@ -316,10 +323,10 @@ class DenoisingTrainer:
             self.history['ssim'].append(val_ssim)
             
             # 打印进度
-            if (epoch + 1) % 1 == 0:
-                print(f"Epoch {epoch+1}/{epochs}")
-                print(f"  Train Loss: {train_loss:.6f}, PSNR: {train_psnr:.2f}, SSIM: {train_ssim:.4f}")
-                print(f"  Val Loss: {val_loss:.6f}, PSNR: {val_psnr:.2f}, SSIM: {val_ssim:.4f}")
+            print(f"Epoch {epoch+1}/{epochs}")
+            print(f"  Train Loss: {train_loss:.8f}, PSNR: {train_psnr:.4f}, SSIM: {train_ssim:.6f}")
+            print(f"  Val Loss: {val_loss:.8f}, PSNR: {val_psnr:.4f}, SSIM: {val_ssim:.6f}")
+            print(f"  Current LR: {self.optimizer.param_groups[0]['lr']:.6f}")
             
             # 保存最佳模型
             if val_psnr > best_psnr and save_dir:
