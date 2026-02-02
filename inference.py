@@ -36,7 +36,7 @@ class DenoisingPipeline:
         self.bitonic_filter = BitonicFilter(kernel_size=3)
         
         # 创建模型
-        self.model = create_model(in_channels=1, num_features=64, num_params=2, device=device)
+        self.model = create_model(in_channels=1, num_features=64, num_params=8, device=device)
         
         # 加载预训练权重
         if model_path and Path(model_path).exists():

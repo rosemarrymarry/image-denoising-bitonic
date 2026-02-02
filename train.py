@@ -108,7 +108,7 @@ def main(args):
     # 创建模型
     print("\n创建模型...")
     model = create_model(in_channels=1, num_features=args.num_features,
-                        num_params=2, device=device)
+                        num_params=8, device=device)
     
     total_params = sum(p.numel() for p in model.parameters())
     print(f"模型参数总数: {total_params:,}")
@@ -118,7 +118,8 @@ def main(args):
         model=model,
         device=device,
         learning_rate=args.learning_rate,
-        block_size=args.block_size
+        block_size=args.block_size,
+        num_params=8
     )
     
     # 训练

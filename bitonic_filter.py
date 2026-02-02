@@ -32,14 +32,29 @@ class BitonicFilter:
         
         Args:
             image: 输入图像 (H, W) 或 (H, W, C)
-            params: 预测的滤波参数 [alpha, beta] 或 None 使用默认参数
+            params: 预测的滤波参数
+                - 2 个参数：[alpha, beta]
+                - 8 个参数：[alpha, beta, gamma, intensity, edge_preserve, detail_enhance, smoothness, boundary_keep]
             
         Returns:
             去噪后的图像
         """
         if params is not None:
-            self.alpha = float(params[0])
-            self.beta = float(params[1])
+            # 支持 2 个或 8 个参数
+            if len(params) >= 2:
+                self.alpha = float(params[0])
+                self.beta = float(params[1])
+            if len(params) >= 8:
+                # 扩展参数
+                gamma = float(params[2])
+                intensity = float(params[3])
+                edge_preserve = float(params[4])
+                detail_enhance = float(params[5])
+                smoothness = float(params[6])
+                boundary_keep = float(params[7])
+                # 组合参数：权重融合多个参数效果
+                self.alpha = self.alpha * (1 - gamma) + smoothness * gamma
+                self.beta = self.beta * boundary_keep + intensity * (1 - boundary_keep)
         
         if len(image.shape) == 3:
             # 处理彩色图像

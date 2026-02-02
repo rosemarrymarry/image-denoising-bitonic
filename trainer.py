@@ -23,7 +23,7 @@ class DenoisingTrainer:
     """
     
     def __init__(self, model: DenoisingNetwork, device: str = 'cpu',
-                 learning_rate: float = 1e-3, block_size: int = 32):
+                 learning_rate: float = 1e-3, block_size: int = 32, num_params: int = 8):
         """
         初始化训练器
         
